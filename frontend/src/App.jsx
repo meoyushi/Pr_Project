@@ -1,192 +1,183 @@
-// Updated App.jsx with Page Transitions
+// This is the App.jsx content you should use.
+// Make sure to add the new lazy imports at the top.
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
-import PrivateRoute from './components/PrivateRoute';
-import PageTransition from './components/common/PageTransition'; // Import PageTransition
+import { ThemeProvider } from './context/ThemeContext';
+import PrivateRoute from './components/PrivateRoute'; // Assuming this handles loading/redirect logic
+import { motion, AnimatePresence } from 'framer-motion';
+import Loader from './components/common/Loader';
+import PropTypes from 'prop-types';
 
 // Layout Components
 import MainLayout from './components/layouts/MainLayout';
 import DashboardLayout from './components/layouts/DashboardLayout';
 
-// Common Components
-import Loader from './components/common/Loader';
-
-// Auth Pages
-import SignUp from './pages/auth/SignUp';
-import Login from './pages/auth/Login';
-
-// Static Pages
-import LandingPage from './pages/static/LandingPage';
-import HomePage from './pages/static/Home';
-import FAQs from './pages/static/FAQs';
-import ContactUs from './pages/static/ContactUs';
-import PrivacyPolicy from './pages/static/Privacy';
-import TermsAndConditions from './pages/static/Terms';
-import NotFound from './pages/static/NotFound';
-
-import OAuthCallback from './pages/OAuthCallback';
-
-// Portfolio Pages
-import PortfolioHome from './pages/portfolio/PortfolioHome';
-import AddProject from './pages/portfolio/AddProject';
-import ProjectTracking from './pages/portfolio/ProjectTracking';
-import TeamCollab from './pages/portfolio/TeamCollab';
-import PortfolioItemDetail from './pages/portfolio/PortfolioItemDetail';
-
-// Resume Pages
-import ResumeBuilderHome from './pages/resume/ResumeBuilderHome';
-import BuildResume from './pages/resume/BuildResume';
-import TemplateGallery from './pages/resume/TemplateGallery';
-
-// ATS Pages
-import ATSTracker from './pages/ats/ATSTracker';
-import AtsHome from './pages/ats/AtsHome';
-import AnalysisView from './pages/ats/AnalysisView';
-import AnalysisResults from './pages/ats/AnalysisResults'; // Assuming this page exists
-import KeywordAnalysis from './pages/ats/KeywordAnalysis'; // Assuming this page exists
-
-// Post
-import Post from './pages/Post';
-
-//Hooks
+// Hooks
 import { useAuth } from './hooks/useAuth';
 
-// Styles
-import './styles/variables.css';
+// Styles (ensure these paths are correct and CSS files are updated)
 import './styles/global.css';
 import './App.css';
-import './styles/animations.css'; // Ensure animations.css is imported
-import ResumeATSScanner from './pages/ats/new';
+import './styles/animations.css'; // Global animations
+import PortfolioNotFound from './pages/portfolio/PortfolioNotFound';
 
-// AnimatedRoutes component wraps all routes with transitions
+// Lazy-loaded components (grouped by module and access level for clarity)
+
+// --- Public / Static Pages ---
+const LandingPage = lazy(() => import('./pages/static/LandingPage'));
+const About = lazy(() => import('./pages/static/About'));
+const ContactUs = lazy(() => import('./pages/static/ContactUs'));
+const FAQs = lazy(() => import('./pages/static/FAQs'));
+const HelpCenter = lazy(() => import('./pages/static/HelpCenter'));
+const NotFound = lazy(() => import('./pages/static/NotFound'));
+const PrivacyPolicy = lazy(() => import('./pages/static/Privacy'));
+const TermsAndConditions = lazy(() => import('./pages/static/Terms')); // Confirmed this is the file name
+const PublicPortfolio = lazy(() => import('./pages/portfolio/PublicPortfolio')); // NEW: Public portfolio view page
+
+// --- Authentication Pages ---
+const Login = lazy(() => import('./pages/auth/Login'));
+const SignUp = lazy(() => import('./pages/auth/SignUp'));
+const OAuthCallback = lazy(() => import('./pages/OAuthCallback'));
+
+// --- User Dashboard & Profile Management ---
+const HomePage = lazy(() => import('./pages/static/Home')); // Acts as the main Dashboard
+const Profile = lazy(() => import('./pages/user/Profile'));
+const Settings = lazy(() => import('./pages/user/Settings'));
+const Post = lazy(() => import('./pages/Post')); // Generic Post/Content View
+
+// --- Resume Builder Module ---
+const ResumeBuilderHome = lazy(() => import('./pages/resume/ResumeBuilderHome'));
+const ResumeOptimizer = lazy(() => import('./pages/resumeBuilder/Resume')); // Using 'pages/resumeBuilder/Resume.jsx' as the builder
+const TemplateGallery = lazy(() => import('./pages/resume/TemplateGallery'));
+const MyResumesPage = lazy(() => import('./pages/resume/MyResumesPage')); // NEW: Create this page
+
+// --- ATS Optimizer Module ---
+const AtsTracker = lazy(() => import('./pages/ats/AtsTracker')); // Main scan input page
+const AtsResults = lazy(() => import('./pages/ats/AtsResults')); // Analysis results page
+const AnalysisView = lazy(() => import('./pages/ats/AnalysisView')); // Detailed report page (modified to fetch by ID)
+const KeywordAnalysis = lazy(() => import('./pages/ats/KeywordAnalysis'));
+const AtsHistoryPage = lazy(() => import('./pages/ats/AtsHistoryPage')); // NEW: Create this page
+
+// --- Portfolio Module ---
+const PortfolioHome = lazy(() => import('./pages/portfolio/PortfolioHome')); // Main portfolio dashboard
+const ProjectDetails = lazy(() => import('./pages/portfolio/ProjectDetails')); // Single project details
+const ProjectForm = lazy(() => import('./components/portfolio/ProjectForm')); // Component for Add/Edit Project
+const ProjectTracking = lazy(() => import('./pages/portfolio/ProjectTracking')); // All projects list page
+const SkillManagement = lazy(() => import('./components/portfolio/SkillManagement')); // Manage skills page
+const TeamCollab = lazy(() => import('./pages/portfolio/TeamCollab'));
+const ProfileSettingsPage = lazy(() => import('./pages/portfolio/ProfileSettingsPage')); // NEW: Create this page for PortfolioDetailsForm
+const CertificatesPage = lazy(() => import('./pages/portfolio/CertificatesPage')); // NEW: Create this page
+const ExperiencePage = lazy(() => import('./pages/portfolio/ExperiencePage')); // NEW: Create this page
+
+
+const FindCandidatesPage =lazy(()=>import('./pages/candidates/FindCandidatesPage'));
+
+// Page transition variants for Framer Motion
+const pageVariants = {
+  initial: { opacity: 0, y: 15 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -15 },
+};
+
+const pageTransition = {
+  duration: 0.35,
+  ease: 'easeInOut',
+};
+
+// ProtectedRoute component - ensures user is logged in
+const ProtectedRoute = ({ children }) => {
+  const { currentUser, loading } = useAuth();
+
+  if (loading) {
+    return <Loader />;
+  }
+
+  if (!currentUser) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+};
+
+ProtectedRoute.propTypes = {
+  children: PropTypes.node.isRequired,
+};
+
 const AnimatedRoutes = () => {
   const location = useLocation();
   const { currentUser } = useAuth();
 
   return (
-    <PageTransition location={location}>
-      <Routes location={location}>
-        {/* Auth Routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<SignUp />} />
-        {/* Public Routes - Pass currentUser to MainLayout */}
-        <Route path="/" element={<MainLayout user={currentUser}><LandingPage /></MainLayout>} />
-        <Route path="/faqs" element={<MainLayout user={currentUser}><FAQs /></MainLayout>} />
-        <Route path="/contact-us" element={<MainLayout user={currentUser}><ContactUs /></MainLayout>} />
-        <Route path="/privacy-policy" element={<MainLayout user={currentUser}><PrivacyPolicy /></MainLayout>} />
-        <Route path="/terms-and-conditions" element={<MainLayout user={currentUser}><TermsAndConditions /></MainLayout>} />
-        <Route path="/oauth-callback" element={<OAuthCallback />} />
-        {/* Protected Routes */}
-        <Route element={<PrivateRoute />}>
-          {/* Redirect to home page if authenticated */}
-          <Route path="/home" element={
-            <DashboardLayout user={currentUser}>
-              <HomePage />
-            </DashboardLayout>
-          } />
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={location.pathname}
+        variants={pageVariants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        transition={pageTransition}
+        className="page-container"
+      >
+        <Routes location={location}>
+          {/* --- Public Routes (accessible without login) --- */}
+          <Route path="/" element={<MainLayout user={currentUser}><LandingPage /></MainLayout>} />
+          <Route path="/about" element={<MainLayout user={currentUser}><About /></MainLayout>} />
+          <Route path="/faqs" element={<MainLayout user={currentUser}><FAQs /></MainLayout>} />
+          <Route path="/contact-us" element={<MainLayout user={currentUser}><ContactUs /></MainLayout>} />
+          <Route path="/privacy" element={<MainLayout user={currentUser}><PrivacyPolicy /></MainLayout>} />
+          <Route path="/terms" element={<MainLayout user={currentUser}><TermsAndConditions /></MainLayout>} />
+          <Route path="/help" element={<MainLayout user={currentUser}><HelpCenter /></MainLayout>} />
+          <Route path="/portfolio/public/:username" element={<MainLayout user={currentUser}><PublicPortfolio /></MainLayout>} /> {/* Public portfolio view */}
+          <Route path="/portfolio-not-found" element={<MainLayout user={currentUser}><PortfolioNotFound /></MainLayout>} /> {/* Portfolio Not Found page */}
 
-          
+          {/* --- Authentication Routes --- */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/oauth-callback" element={<OAuthCallback />} />
 
-          {/* Post */}
-          <Route path="/post/:id" element={
-            <MainLayout>
-              <Post />
-            </MainLayout>
-          } />
+          {/* --- Protected Routes (require user login) --- */}
+          {/* General Dashboard & User Management */}
+          <Route path="/home" element={<ProtectedRoute><DashboardLayout user={currentUser}><HomePage /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><DashboardLayout user={currentUser}><Profile /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><DashboardLayout user={currentUser}><Settings /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/post/:id" element={<ProtectedRoute><MainLayout user={currentUser}><Post /></MainLayout></ProtectedRoute>} /> {/* Generic post view */}
 
-          {/* Portfolio Routes */}
-          <Route path="/portfolioHome" element={
-            <DashboardLayout user={currentUser}>
-              <PortfolioHome />
-            </DashboardLayout>
-          } />
-          <Route path="/portfolio/add" element={
-            <DashboardLayout user={currentUser}>
-              <AddProject />
-            </DashboardLayout>
-          } />
+          {/* Portfolio Module */}
+          <Route path="/portfolio" element={<ProtectedRoute><DashboardLayout user={currentUser}><PortfolioHome /></DashboardLayout></ProtectedRoute>} /> {/* Main dashboard */}
+          <Route path="/portfolio/settings" element={<ProtectedRoute><ProfileSettingsPage /></ProtectedRoute>} /> {/* New page */}
+          <Route path="/portfolio/skills" element={<ProtectedRoute><DashboardLayout user={currentUser}><SkillManagement /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/portfolio/projects" element={<ProtectedRoute><DashboardLayout user={currentUser}><ProjectTracking /></DashboardLayout></ProtectedRoute>} /> {/* All projects list */}
+          <Route path="/portfolio/projects/add" element={<ProtectedRoute><DashboardLayout user={currentUser}><ProjectForm /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/portfolio/projects/edit/:id" element={<ProtectedRoute><DashboardLayout user={currentUser}><ProjectForm editMode={true} /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/portfolio/projects/:id" element={<ProtectedRoute><DashboardLayout user={currentUser}><ProjectDetails /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/portfolio/certificates" element={<ProtectedRoute><CertificatesPage /></ProtectedRoute>} /> {/* New page */}
+          <Route path="/portfolio/experience" element={<ProtectedRoute><ExperiencePage /></ProtectedRoute>} /> {/* New page */}
+          <Route path="/portfolio/team" element={<ProtectedRoute><DashboardLayout user={currentUser}><TeamCollab /></DashboardLayout></ProtectedRoute>} />
 
-          <Route path="/portfolio/view/:id" element={
-            <DashboardLayout user={currentUser}>
-              <PortfolioItemDetail />
-            </DashboardLayout>
-          } />
+          {/* Resume Builder Module */}
+          <Route path="/resume" element={<ProtectedRoute><DashboardLayout user={currentUser}><ResumeBuilderHome /></DashboardLayout></ProtectedRoute>} /> {/* Builder Home */}
+          <Route path="/resume/build" element={<ProtectedRoute><DashboardLayout user={currentUser}><ResumeOptimizer /></DashboardLayout></ProtectedRoute>} /> {/* Using pages/newResume/Resume.jsx */}
+          <Route path="/resume/edit/:resumeId" element={<ProtectedRoute><DashboardLayout user={currentUser}><ResumeOptimizer editMode={true} /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/resume/templates" element={<ProtectedRoute><DashboardLayout user={currentUser}><TemplateGallery /></DashboardLayout></ProtectedRoute>} />
+          <Route path="/resume/my-resumes" element={<ProtectedRoute><MyResumesPage /></ProtectedRoute>} /> {/* New page */}
 
-          <Route path="/portfolio/edit/:id" element={
-            <DashboardLayout user={currentUser}>
-              <AddProject isEditing={true} />
-            </DashboardLayout>
-          } />
-          <Route path="/portfolio/tracking" element={
-            <DashboardLayout user={currentUser}>
-              <ProjectTracking />
-            </DashboardLayout>
-          } />
-          <Route path="/portfolio/team" element={
-            <DashboardLayout user={currentUser}>
-              <TeamCollab />
-            </DashboardLayout>
-          } />
+          {/* ATS Optimizer Module */}
+          <Route path="/ats" element={<ProtectedRoute><DashboardLayout user={currentUser}><AtsTracker /></DashboardLayout></ProtectedRoute>} /> {/* Main ATS page with upload */}
 
-          {/* Resume Routes */}
-          <Route path="/resume-builder-home" element={
-            <DashboardLayout user={currentUser}>
-              <ResumeBuilderHome />
-            </DashboardLayout>
-          } />
-          <Route path="/resume-builder" element={
-            <DashboardLayout user={currentUser}>
-              <BuildResume />
-            </DashboardLayout>
-          } />
-          <Route path="/resume/templates" element={
-            <DashboardLayout user={currentUser}>
-              <TemplateGallery />
-            </DashboardLayout>
-          } />
-          <Route path="/resume/create" element={
-            <DashboardLayout user={currentUser}>
-              <BuildResume />
-            </DashboardLayout>
-          } />
+          <Route path="/ats/results" element={<ProtectedRoute><DashboardLayout user={currentUser}><AtsResults /></DashboardLayout></ProtectedRoute>} /> {/* Analysis results page */}
+          <Route path="/ats/analysis/:analysisId" element={<ProtectedRoute><DashboardLayout user={currentUser}><AnalysisView /></DashboardLayout></ProtectedRoute>} /> {/* Detailed report (fetches by ID) */}
+          <Route path="/ats/history" element={<ProtectedRoute><DashboardLayout user={currentUser}><AtsHistoryPage /></DashboardLayout></ProtectedRoute>} /> {/* New page */}
+          <Route path="/ats/keywords" element={<ProtectedRoute><DashboardLayout user={currentUser}><KeywordAnalysis /></DashboardLayout></ProtectedRoute>} />
+          {/* --- Fallback Routes --- */}
+          <Route path="/index.html" element={<Navigate to="/" replace />} /> {/* Redirect old index.html route */}
+          <Route path="*" element={<MainLayout user={currentUser}><NotFound /></MainLayout>} /> {/* 404 Not Found */}
 
-          {/* ATS Routes */}
-          <Route path="/ats/home" element={
-            <DashboardLayout user={currentUser}>
-              <AtsHome />
-            </DashboardLayout>
-          } />
-          <Route path="/ats/tracker" element={
-            <DashboardLayout user={currentUser}>
-              <ResumeATSScanner />
-            </DashboardLayout>
-          } />
-          <Route path="/ats/analysis/:analysisId" element={
-            <DashboardLayout user={currentUser}>
-              <AnalysisView />
-            </DashboardLayout>
-          } />
-          <Route path="/ats/results" element={
-            <DashboardLayout user={currentUser}>
-              <AnalysisResults />
-            </DashboardLayout>
-          } />
-          <Route path="/ats/keywords" element={
-            <DashboardLayout user={currentUser}>
-              <KeywordAnalysis />
-            </DashboardLayout>
-          } />
-        </Route>
-
-        {/* Redirect unknown routes to home when authenticated */}
-        <Route path="/index.html" element={<Navigate to="/" replace />} />
-
-        {/* 404 Page */}
-        <Route path="*" element={<MainLayout user={currentUser}><NotFound /></MainLayout>} />
-      </Routes>
-    </PageTransition>
+          <Route path="/find-candidates" element={<ProtectedRoute><DashboardLayout user={currentUser}><FindCandidatesPage/></DashboardLayout></ProtectedRoute>} />
+        </Routes>
+      </motion.div>
+    </AnimatePresence>
   );
 };
 
@@ -195,34 +186,37 @@ function App() {
   const [authError, setAuthError] = useState(null);
 
   useEffect(() => {
+    // Simulate initial loading time, perhaps for auth context to initialize
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 1500);
-
     return () => clearTimeout(timer);
   }, []);
 
   const handleAuthError = (error) => {
     setAuthError(error);
-    console.error('Authentication error:', error);
   };
 
   if (isLoading) {
-    return <Loader />;
+    return <Loader />; // Your global loading component
   }
 
   return (
     <AuthProvider onError={handleAuthError}>
-      <Router>
-        <div className="app-container bg-[#0D1117] min-h-screen">
-          <AnimatedRoutes />
-          {authError && (
-            <div className="fixed bottom-4 right-4 bg-red-500 text-white p-4 rounded-lg shadow-lg">
-              Authentication error: {authError.message}
-            </div>
-          )}
-        </div>
-      </Router>
+      <ThemeProvider>
+        <Router>
+          <div className="app-container min-h-screen">
+            <Suspense fallback={<Loader />}>
+              <AnimatedRoutes />
+            </Suspense>
+            {authError && (
+              <div className="fixed bottom-4 right-4 bg-red-500 text-white p-4 rounded-lg shadow-lg z-50">
+                Authentication error: {authError.message}
+              </div>
+            )}
+          </div>
+        </Router>
+      </ThemeProvider>
     </AuthProvider>
   );
 }

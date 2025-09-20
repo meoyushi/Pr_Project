@@ -1,169 +1,373 @@
-/* Footer.css - Combined and Enhanced Styles */
+/* SOLUTION 1: Flexbox Sticky Footer (Recommended) */
+/* Add this to your main layout/body styles */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
 
+/* Your main container (usually wraps your entire app/page content) */
+.app-container, #root, .main-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Your main content area (everything above footer) */
+.main-content {
+  flex: 1; /* This makes the content take up available space */
+}
+
+/* Your existing footer styles with one small addition */
 .footer {
-  background-color: var(--bg-secondary);
-  color: var(--text-primary);
-  padding-top: var(--spacing-xl);
-  position: relative; /* For the glow effect */
-  overflow: hidden; /* Hide the glow overflow */
+  position: relative;
+  overflow: hidden;
+  padding-top: 3rem;
+  z-index: 10;
+  color: rgb(var(--color-text-secondary));
+  background-color: rgb(var(--color-background-primary));
+  border-top: 1px solid rgba(var(--color-accent-neutral), 0.3);
+  
+  /* Add this to ensure footer takes only needed space */
+  flex-shrink: 0;
+  margin-top: auto; /* This pushes footer to bottom when content is short */
 }
 
-.footer-glow {
-  position: absolute;
-  top: -50px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, rgba(0, 255, 255, 0.2), transparent);
-  filter: blur(100px);
-  z-index: 0;
-  pointer-events: none; /* Allow clicks through the glow */
+/* ============================================ */
+/* SOLUTION 2: CSS Grid Alternative */
+/* If you prefer CSS Grid, use this instead */
+.app-container-grid {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: 1fr auto; /* Content takes available space, footer takes what it needs */
 }
+
+.main-content-grid {
+  /* Content area - will expand to fill available space */
+}
+
+.footer-grid {
+  /* Footer will only take the space it needs */
+  /* Use your existing .footer styles here */
+}
+
+/* ============================================ */
+/* SOLUTION 3: If you're using React/Next.js */
+/* Structure your layout like this in JSX: */
+/*
+<div className="app-container">
+  <main className="main-content">
+    <!-- Your page content here -->
+  </main>
+  <footer className="footer">
+    <!-- Your footer content -->
+  </footer>
+</div>
+*/
+
+/* ============================================ */
+/* SOLUTION 4: Absolute positioning (less flexible) */
+/* Only use if other solutions don't work */
+.footer-absolute {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  /* Your existing footer styles */
+}
+
+/* Make sure your body has enough padding-bottom to prevent content overlap */
+body.with-absolute-footer {
+  padding-bottom: 300px; /* Adjust based on your footer height */
+}
+
+/* ============================================ */
+/* Keep all your existing footer styles below */
 
 .footer-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--spacing-xl);
+  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+  gap: 2rem;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 var(--spacing-xl);
-  position: relative; /* Ensure content is above the glow */
-  z-index: 1;
+  padding: 0 1.5rem;
+}
+
+.footer-logo {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 2.2rem;
+  font-weight: 900;
+  margin-bottom: 0.8rem;
+  background: linear-gradient(135deg, rgb(var(--color-accent-primary)), rgb(var(--color-accent-secondary)));
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+  cursor: pointer;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  transition: all 0.3s ease;
+}
+
+.footer-logo:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
 }
 
 .footer-brand {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
-}
-
-.footer-logo {
-  color: var(--accent-cyan);
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-  margin-bottom: var(--spacing-sm);
+  align-items: center;
+  text-align: center;
 }
 
 .footer-description {
-  font-size: var(--font-size-sm);
-  line-height: 1.6;
-  opacity: 0.8;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  max-width: 300px;
+  color: rgb(var(--color-text-secondary));
+  opacity: 0.9;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  text-align: center;
 }
 
 .footer-heading {
-  color: var(--accent-cyan);
-  font-size: var(--font-size-md);
-  margin-bottom: var(--spacing-md);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: rgb(var(--color-text-primary));
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 1.2rem;
+  letter-spacing: -0.01em;
+  position: relative;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.footer-heading::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, rgb(var(--color-accent-primary)), rgb(var(--color-accent-secondary)));
+  transition: width 0.3s ease;
+}
+
+.footer-heading:hover::after {
+  width: 100%;
 }
 
 .footer-links {
   list-style: none;
   padding: 0;
   margin: 0;
-}
-
-.footer-links li {
-  margin-bottom: var(--spacing-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .footer-links a {
-  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: rgb(var(--color-text-secondary));
   text-decoration: none;
-  font-size: var(--font-size-sm);
-  transition: color var(--transition-fast);
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  display: inline-block;
+  letter-spacing: 0.01em;
+}
+
+.footer-links a::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -8px;
+  width: 0;
+  height: 1px;
+  background: rgb(var(--color-accent-primary));
+  transition: width 0.3s ease;
+  transform: translateY(-50%);
 }
 
 .footer-links a:hover {
-  color: var(--accent-purple);
+  color: rgb(var(--color-accent-primary));
+  transform: translateX(6px);
 }
 
-.social-links {
+.footer-links a:hover::before {
+  width: 5px;
+}
+
+.social-links-new {
   display: flex;
-  gap: var(--spacing-md);
-  margin-top: var(--spacing-sm);
+  gap: 0.8rem;
+  margin-top: 1.2rem;
 }
 
-.social-links a {
-  color: var(--text-primary);
-  text-decoration: none;
-  transition: color var(--transition-fast);
-  font-size: var(--font-size-lg); /* Increased size for better visibility */
+.social-icon {
+  color: rgb(var(--color-text-secondary));
+  font-size: 1.1rem;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 6px;
+  border-radius: 50%;
+  background: rgba(var(--color-background-secondary), 0.5);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(var(--color-accent-neutral), 0.3);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.social-links a:hover {
-  color: var(--accent-cyan);
+.social-icon::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+  transition: left 0.4s ease;
+}
+
+.social-icon:hover::before {
+  left: 100%;
+}
+
+.social-icon:hover {
+  color: rgb(var(--color-accent-primary));
+  background: rgba(var(--color-accent-primary), 0.1);
+  border-color: rgb(var(--color-accent-primary));
+  box-shadow: 0 5px 15px rgba(var(--color-accent-primary), 0.2);
 }
 
 .footer-bottom {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-md) var(--spacing-xl);
-  border-top: 1px solid rgba(229, 229, 229, 0.1);
-  margin-top: var(--spacing-xl);
-  max-width: 1280px;
-  margin-left: auto;
-  margin-right: auto;
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary); /* A slightly lighter text color */
+  padding: 1.2rem 1.5rem;
+  background: rgb(var(--color-background-secondary));
+  border-top: 1px solid rgba(var(--color-accent-neutral), 0.3);
+  margin-top: 3rem;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: rgb(var(--color-text-secondary));
+  letter-spacing: 0.01em;
 }
 
 .scroll-top-button {
-  background: transparent;
-  color: var(--accent-cyan);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: linear-gradient(135deg, rgb(var(--color-accent-primary)), rgb(var(--color-accent-secondary)));
+  background-size: 200% auto;
+  color: white;
   border: none;
   cursor: pointer;
-  font-size: var(--font-size-lg);
-  transition: opacity var(--transition-fast);
+  padding: 0.6rem 1rem;
+  border-radius: 30px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.01em;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 3px 10px rgba(var(--color-accent-primary), 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.scroll-top-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.scroll-top-button:hover::before {
+  left: 100%;
 }
 
 .scroll-top-button:hover {
-  opacity: 0.8;
+  background-position: right center;
+  box-shadow: 0 6px 20px rgba(var(--color-accent-primary), 0.35);
+  transform: translateY(-1px);
 }
 
-@media (max-width: 768px) {
+.scroll-top-icon {
+  font-size: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 900px) {
+  .footer-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+  }
+  .footer-brand {
+    grid-column: span 2;
+    text-align: center;
+    align-items: center;
+  }
+  .footer-section {
+    text-align: center;
+  }
+  .footer-links {
+    align-items: center;
+  }
+  .footer-links a::before {
+    left: -18px;
+  }
+}
+
+@media (max-width: 480px) {
   .footer-container {
     grid-template-columns: 1fr;
-    gap: var(--spacing-lg);
-    padding: 0 var(--spacing-md);
   }
-
+  .footer-brand, .footer-section {
+    grid-column: span 1;
+    text-align: center;
+  }
   .footer-bottom {
-    flex-direction: column;
-    gap: var(--spacing-md);
-    text-align: center;
-    padding: var(--spacing-md);
-  }
-
-  .footer-brand {
-    align-items: center;
+    flex-direction: column-reverse;
+    gap: 1rem;
     text-align: center;
   }
-
+  
+  .footer-logo {
+    font-size: 2rem;
+    letter-spacing: -0.01em;
+  }
+  
   .social-links {
     justify-content: center;
   }
-}
 
-/* Ensure these variables are defined in your global CSS or a variables.css file */
-/* :root {
-  --bg-secondary: #161B22;
-  --text-primary: #E5E5E5;
-  --text-secondary: #BDBDBD;
-  --accent-cyan: #00FFFF;
-  --accent-purple: #9C27B0;
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 1.5rem;
-  --spacing-xl: 2rem;
-  --font-size-sm: 0.875rem;
-  --font-size-md: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --font-weight-normal: 400;
-  --font-weight-medium: 500;
-  --font-weight-bold: 700;
-  --transition-fast: 0.15s ease-in-out;
-} */
+  .footer-description {
+    font-size: 0.85rem;
+  }
+
+  .footer-heading {
+    font-size: 0.8rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .footer-links a {
+    font-size: 0.85rem;
+  }
+
+  .scroll-top-button {
+    padding: 0.5rem 0.8rem;
+    font-size: 0.75rem;
+  }
+}

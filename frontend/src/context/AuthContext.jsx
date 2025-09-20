@@ -12,42 +12,63 @@ export const AuthProvider = ({ children }) => {
     localStorage.getItem('isAuthenticated') === 'true'
   );
 
+  const [portfolioDetails, setPortfolioDetails] = useState({
+    jobTitle: '',
+    location: '',
+    phone: '',
+    yearsOfExperience: 0,
+    availability: 'available',
+    bio: '',
+    socialLinks: {
+      github: '',
+      linkedin: '',
+      twitter: '',
+      instagram: '',
+      facebook: ''
+    }
+  });
+
   const token = localStorage.getItem('token');
-
-
-
   useEffect(() => {
     const checkAuth = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:5000/api/auth/me`, {
+        const response = await fetch('http://localhost:5000/api/auth/me', {
           method: 'GET',
-          credentials: 'include', // CRUCIAL for sending cookies!
+          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           }
         });
-        console.log(response)
         if (response.ok) {
           const userData = await response.json();
+          console.log('User data fetched successfully:', userData);
           setCurrentUser({
-            displayName: userData.username || userData.name || 'User',
-            email: userData.email
+            id:userData.user.id,
+            username: userData.user.username || 'User',
+            displayName: userData.user.displayName || userData.user.name || 'User',
+            email: userData.user.email,
+            profileImage: userData.user.profileImage || null
           });
           setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+          localStorage.removeItem('token');
+          localStorage.removeItem('isAuthenticated');
         }
       } catch (error) {
         console.error('Auth check failed:', error);
+        setIsAuthenticated(false);
+        localStorage.removeItem('token');
+        localStorage.removeItem('isAuthenticated');
+      } finally {
+        setLoading(false);
       }
     };
 
     checkAuth();
   }, []);
-
-
-  // Function to fetch current user details
-  // In AuthContext.jsx, modify the fetchUserDetails function:
 
   const fetchUserDetails = async () => {
     try {
@@ -58,20 +79,25 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      const response = await fetch(`http://localhost:5000/api/auth/me`, {
+      const response = await fetch(SummaryApi.current_user.url, {
         method: 'GET',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`  // Ensure proper space after "Bearer"
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json'
         }
       });
 
       if (response.ok) {
         const userData = await response.json();
-        setCurrentUser(userData);
+        setCurrentUser({
+          ...userData.data,
+          displayName: userData.data.displayName || 'User',
+          profileImage: userData.data.profileImage || null
+        });
         setIsAuthenticated(true);
       } else {
-        // Token is invalid or expired
         setIsAuthenticated(false);
         localStorage.removeItem('token');
         localStorage.removeItem('isAuthenticated');
@@ -86,14 +112,59 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // In your AuthContext or main App component
-  // Check auth status on mount
+  const fetchPortfolioDetails = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(SummaryApi.portfolioDetails.get.url, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.data) {
+          setPortfolioDetails(data.data);
+          return data.data;
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching portfolio details:', error);
+      return null;
+    }
+  };
+
+  const updatePortfolioDetails = async (updatedDetails) => {
+    try {
+      const token = localStorage.getItem('token');
+
+      const response = await fetch(SummaryApi.portfolioDetails.update.url, {
+        method: SummaryApi.portfolioDetails.update.method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(updatedDetails)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setPortfolioDetails(data.data);
+        return data.data;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error updating portfolio details:', error);
+      return null;
+    }
+  };
+
+
   useEffect(() => {
     fetchUserDetails();
+    fetchPortfolioDetails();
   }, []);
-
-  // Regular email/password login
-  // In your login function in AuthContext.jsx:
   const login = async (email, password) => {
     setError(null);
     try {
@@ -107,12 +178,10 @@ export const AuthProvider = ({ children }) => {
       });
 
       const result = await response.json();
-      console.log("Login response:", result); // Debug response
+
 
       if (response.ok) {
-        // Make sure you're extracting the token correctly based on your API response
         const token = result.data?.token || result.data;
-
         if (token) {
           localStorage.setItem("token", token);
           localStorage.setItem("isAuthenticated", "true");
@@ -135,8 +204,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Regular email/password signup
-  const signup = async (email, password, username) => {
+  const signup = async (email, password, username, displayName) => {
     setError(null);
     try {
       const response = await fetch(SummaryApi.signUp.url, {
@@ -144,8 +212,8 @@ export const AuthProvider = ({ children }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // Important for cookies
-        body: JSON.stringify({ username, email, password }),
+        credentials: 'include',
+        body: JSON.stringify({ username, email, password, displayName }),
       });
 
       const result = await response.json();
@@ -163,7 +231,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Logout function
   const logout = async () => {
     try {
       await fetch(SummaryApi.logout_user.url, {
@@ -171,14 +238,12 @@ export const AuthProvider = ({ children }) => {
         credentials: 'include',
       });
 
-      // Clear auth state regardless of server response
       setCurrentUser(null);
       setIsAuthenticated(false);
       localStorage.removeItem('isAuthenticated');
       localStorage.removeItem('token');
     } catch (error) {
       console.error('Logout error:', error);
-      // Still clear auth state even if server request fails
       setCurrentUser(null);
       setIsAuthenticated(false);
       localStorage.removeItem('isAuthenticated');
@@ -186,61 +251,45 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Google OAuth login
   const signInWithGoogle = () => {
-    window.open(SummaryApi.googleAuth.url || "http://localhost:5000/auth/google", "_self");
+    window.open(SummaryApi.googleAuth.url || "http://localhost:5000/api/auth/google", "_self");
   };
 
-  // GitHub OAuth login
   const signInWithGithub = () => {
-    window.open(SummaryApi.githubAuth.url || "http://localhost:5000/auth/github", "_self");
+    window.open(SummaryApi.githubAuth.url || "http://localhost:5000/api/auth/github", "_self");
   };
+  const handleOAuthCallback = async (token, user) => {
+    try {
+      if (token && user) {
+        localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('token', token);
 
-  // OAuth callback handler
-  // In your AuthContext.js
-const handleOAuthCallback = async (token, userId) => {
-  try {
-    // Verify the token first
-    const response = await fetch(`http://localhost:5000/api/auth/verify-token`, {
-      method:'GET',
-      credentials:'include',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        setCurrentUser({
+          id: user._id,
+          username: user.username || 'User',
+          displayName: user.displayName || 'User',
+          email: user.email,
+        });
+
+        setIsAuthenticated(true);
+        await fetchUserDetails();
+        return true;
+      } else {
+        throw new Error('Token verification failed');
       }
-    });
-    console.log(response)
-
-    if (response.ok) {
-      const userData = await response.json();
-      
-      localStorage.setItem('token', token);
-      localStorage.setItem('isAuthenticated', 'true');
-      
-      setCurrentUser({
-        id: userData._id,
-        displayName: userData.username || userData.displayName || 'User',
-        email: userData.email,
-      });
-      
-      setIsAuthenticated(true);
-      await fetchUserDetails(); 
-      return true;
-    } else {
-      throw new Error('Token verification failed');
+    } catch (error) {
+      console.error('OAuth callback error:', error);
+      logout(); // Clear any existing auth state
+      return false;
     }
-  } catch (error) {
-    console.error('OAuth callback error:', error);
-    logout(); // Clear any existing auth state
-    return false;
-  }
-};
+  };
 
   const value = {
     currentUser,
     isAuthenticated,
     loading,
     error,
+    portfolioDetails,
     setCurrentUser,
     setIsAuthenticated,
     login,
@@ -250,12 +299,14 @@ const handleOAuthCallback = async (token, userId) => {
     signInWithGithub,
     handleOAuthCallback,
     refreshUserDetails: fetchUserDetails,
+    fetchUserDetails,
+    fetchPortfolioDetails,
+    updatePortfolioDetails
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// Define propTypes for AuthProvider
 AuthProvider.propTypes = {
   children: PropTypes.node.isRequired,
 };

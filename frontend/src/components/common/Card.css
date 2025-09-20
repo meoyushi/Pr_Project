@@ -1,52 +1,226 @@
+/* === CARD COMPONENT STYLES (UNIFIED THEME SYSTEM) === */
+
+/* CSS Variables for dynamic theming */
+:root {
+  /* Card spotlight effect colors */
+  --card-spotlight-primary: rgba(var(--color-accent-primary), 0.15);
+  --card-spotlight-secondary: rgba(var(--color-highlight), 0.1);
+  
+  /* Card hover glow effects */
+  --card-hover-shadow-light: 0 25px 50px -12px rgba(49, 130, 206, 0.25), 0 0 0 1px rgba(49, 130, 206, 0.1);
+  --card-hover-shadow-dark: 0 25px 50px -12px rgba(0, 255, 255, 0.25), 0 0 0 1px rgba(0, 255, 255, 0.1);
+  --card-hover-shadow-portfolio: 0 25px 50px -12px rgba(99, 102, 241, 0.25), 0 0 0 1px rgba(99, 102, 241, 0.1);
+}
+
 .card {
-  background-color: var(--bg-secondary);
-  border-radius: var(--border-radius-md);
+  position: relative;
   overflow: hidden;
-  transition: transform var(--transition-normal);
+  isolation: isolate;
+  border: 1px solid rgba(var(--color-accent-primary), 0.2);
+  background: rgba(var(--color-background-secondary), 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 1rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Card variants */
-.card-default {
-  padding: var(--spacing-lg);
-}
-
-.card-compact {
-  padding: var(--spacing-md);
-}
-
-.card-flat {
-  padding: var(--spacing-md);
-  border: 1px solid rgba(229, 229, 229, 0.1);
-}
-
-.card-interactive {
+.card.is-clickable {
   cursor: pointer;
 }
 
-.card-interactive:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+/* Enhanced gradient border on hover */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, 
+    rgba(var(--color-accent-primary), 0.8), 
+    rgba(var(--color-highlight), 0.6)
+  );
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.4s ease;
 }
 
-/* Card elevations */
-.card-elevation-low {
-  box-shadow: var(--shadow-sm);
+.card:hover::before {
+  opacity: 1;
 }
 
-.card-elevation-medium {
-  box-shadow: var(--shadow-md);
+/* Hover glow effect - theme aware */
+.card:hover {
+  box-shadow: var(--card-hover-shadow-light);
 }
 
-.card-elevation-high {
-  box-shadow: var(--shadow-lg);
+/* Subtle noise texture */
+.card-noise {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: 
+    radial-gradient(circle at 25% 25%, rgba(var(--color-accent-primary), 0.02) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(var(--color-highlight), 0.02) 0%, transparent 50%);
+  opacity: 0.6;
 }
 
-.card-clickable {
-  cursor: pointer;
-  transition: all var(--transition-normal);
+/* Enhanced spotlight effect */
+.card-spotlight {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: inherit;
+  mix-blend-mode: overlay;
 }
 
-.card-clickable:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.15);
+.card-content {
+  position: relative;
+  z-index: 3;
+  height: 100%;
+}
+
+/* Post card styles */
+.card-link {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+
+.card-image-wrapper {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.75rem 0.75rem 0 0;
+}
+
+.card-image {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(var(--color-accent-primary), 0.1) 0%,
+    rgba(var(--color-highlight), 0.1) 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.card:hover .card-overlay {
+  opacity: 1;
+}
+
+.card-text-content {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  gap: 0.75rem;
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0;
+  color: rgb(var(--color-text-primary));
+  transition: all 0.3s ease;
+}
+
+.card-title.gradient-text {
+  background: linear-gradient(135deg, 
+    rgb(var(--color-accent-primary)), 
+    rgb(var(--color-highlight))
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  transition: all 0.3s ease;
+}
+
+.card:hover .card-title.gradient-text {
+  background: linear-gradient(135deg, 
+    rgb(var(--color-highlight)), 
+    rgb(var(--color-accent-primary))
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.card-description {
+  color: rgb(var(--color-text-secondary));
+  line-height: 1.6;
+  flex-grow: 1;
+  margin: 0;
+}
+
+.card-read-more {
+  font-weight: 600;
+  color: rgb(var(--color-accent-primary));
+  align-self: flex-start;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.card-read-more::after {
+  content: '';
+  width: 1rem;
+  height: 1rem;
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2' stroke='currentColor'%3e%3cpath stroke-linecap='round' stroke-linejoin='round' d='M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3'%3e%3c/path%3e%3c/svg%3e") no-repeat center;
+  mask-size: contain;
+  transition: transform 0.3s ease;
+}
+
+.card:hover .card-read-more {
+  color: rgb(var(--color-highlight));
+}
+
+.card:hover .card-read-more::after {
+  transform: translateX(4px);
+}
+
+/* === DARK THEME SPECIFIC OVERRIDES === */
+.dark .card {
+  border-color: rgba(var(--color-accent-primary), 0.3);
+  background: rgba(var(--color-background-secondary), 0.9);
+}
+
+.dark .card-noise {
+  opacity: 0.8;
+}
+
+.dark .card:hover {
+  box-shadow: var(--card-hover-shadow-dark);
+}
+
+/* === PORTFOLIO THEME SPECIFIC OVERRIDES === */
+body.portfolio-theme.dark .card:hover {
+  box-shadow: var(--card-hover-shadow-portfolio);
+}
+
+/* === RESPONSIVE ADJUSTMENTS === */
+@media (max-width: 768px) {
+  .card-text-content {
+    padding: 1rem;
+  }
+  
+  .card-title {
+    font-size: 1.125rem;
+  }
+  
+  .card-image {
+    height: 160px;
+  }
 }
